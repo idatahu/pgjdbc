@@ -2139,6 +2139,8 @@ public class QueryExecutorImpl extends QueryExecutorBase {
     boolean bothRowsAndStatus = (flags & QueryExecutor.QUERY_BOTH_ROWS_AND_STATUS) != 0;
 
     List<Tuple> tuples = null;
+    long tupleBytes = 0;
+    boolean hadTooManyTuples = false;
 
     int c;
     boolean endQuery = false;
@@ -2378,8 +2380,15 @@ public class QueryExecutorImpl extends QueryExecutorBase {
             if (tuples == null) {
               tuples = new ArrayList<Tuple>();
             }
-            if (tuple != null) {
+            if (tupleBytes <= limitTupleBytes) {
               tuples.add(tuple);
+              tupleBytes += accountBytes(tuple);
+            } else {
+              if (!hadTooManyTuples) {
+                handler.handleError(new PSQLException(GT.tr("Ran out of allowed memory retrieving query results."), PSQLState.OUT_OF_MEMORY));
+              } else {
+                hadTooManyTuples = true;
+              }
             }
           }
 
@@ -2553,6 +2562,19 @@ public class QueryExecutorImpl extends QueryExecutorBase {
       }
 
     }
+  }
+
+  private long accountBytes(Tuple tuple) {
+    long ret = 0;
+    int ilen = tuple.fieldCount();
+    for (int i = 0; i < ilen; i++) {
+      if (tuple.get(i) == null) {
+        continue;
+      }
+      int len = 24 + tuple.get(i).length;
+      ret += ((len - 1) | 7) + 1;
+    }
+    return 24 + 4 * ilen + ret;
   }
 
   /**
@@ -3042,6 +3064,8 @@ public class QueryExecutorImpl extends QueryExecutorBase {
   private long nextUniqueID = 1;
   private final boolean allowEncodingChanges;
   private final boolean cleanupSavePoints;
+
+  public static volatile long limitTupleBytes = Long.MAX_VALUE;
 
   /**
    * <p>The estimated server response size since we last consumed the input stream from the server, in
