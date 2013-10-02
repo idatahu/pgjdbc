@@ -1873,7 +1873,7 @@ public class QueryExecutorImpl implements QueryExecutor {
                     	if (!hadTooManyTuples) {
                     		hadTooManyTuples = true;
                     		tuples = new ArrayList();
-                    		handler.handleError(new PSQLException(GT.tr("Ran out of allowed memory retrieving query results."), PSQLState.OUT_OF_MEMORY));
+                    		handler.handleError(new PSQLException(GT.tr("Ran out of allowed memory retrieving query results. Bytes={0}", tupleBytes), PSQLState.OUT_OF_MEMORY));
                     	}
                     }
                 }
