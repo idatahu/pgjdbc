@@ -2385,9 +2385,9 @@ public class QueryExecutorImpl extends QueryExecutorBase {
               tupleBytes += accountBytes(tuple);
             } else {
               if (!hadTooManyTuples) {
-                handler.handleError(new PSQLException(GT.tr("Ran out of allowed memory retrieving query results."), PSQLState.OUT_OF_MEMORY));
-              } else {
                 hadTooManyTuples = true;
+                tuples = new ArrayList<Tuple>();
+                handler.handleError(new PSQLException(GT.tr("Ran out of allowed memory retrieving query results."), PSQLState.OUT_OF_MEMORY));
               }
             }
           }
