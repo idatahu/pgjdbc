@@ -1677,6 +1677,8 @@ public class QueryExecutorImpl implements QueryExecutor {
         boolean bothRowsAndStatus = (flags & QueryExecutor.QUERY_BOTH_ROWS_AND_STATUS) != 0;
 
         List tuples = null;
+        long tupleBytes = 0;
+        boolean hadTooManyTuples = false;
 
         int len;
         int c;
@@ -1863,7 +1865,18 @@ public class QueryExecutorImpl implements QueryExecutor {
                 {
                     if (tuples == null)
                         tuples = new ArrayList();
-                    tuples.add(tuple);
+                    if (tupleBytes <= limitTupleBytes) {
+                    	tuples.add(tuple);
+                    	tupleBytes += accountBytes(tuple);
+                    }
+                    else {
+                    	if (!hadTooManyTuples) {
+                    		handler.handleError(new PSQLException(GT.tr("Ran out of allowed memory retrieving query results."), PSQLState.OUT_OF_MEMORY));
+                    	}
+                    	else {
+                    		hadTooManyTuples = true;
+                    	}
+                    }
                 }
 
                 if (logger.logDebug()) {
@@ -2036,7 +2049,18 @@ public class QueryExecutorImpl implements QueryExecutor {
         }
     }
 
-    /**
+    private long accountBytes(byte[][] tuple) {
+    	long ret = 0;
+    	int ilen = tuple.length;
+    	for (int i = 0; i < ilen; i++) {
+    		if (tuple[i] == null) continue;
+    		int len = 24 + tuple[i].length;
+    		ret += ((len-1) | 7) + 1;
+    	}
+		return 24 + 4*ilen + ret;
+	}
+
+	/**
      * Ignore the response message by reading the message length and skipping
      * over those bytes in the communication stream.
      */
@@ -2240,6 +2264,8 @@ public class QueryExecutorImpl implements QueryExecutor {
     private final PGStream pgStream;
     private final Logger logger;
     private final boolean allowEncodingChanges;
+    
+    public volatile static long limitTupleBytes = Long.MAX_VALUE;
 
     /**
      * The number of queries executed so far without processing any results.
