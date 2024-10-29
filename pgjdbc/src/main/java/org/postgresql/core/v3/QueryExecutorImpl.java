@@ -169,6 +169,7 @@ public class QueryExecutorImpl extends QueryExecutorBase {
 
     this.allowEncodingChanges = PGProperty.ALLOW_ENCODING_CHANGES.getBoolean(info);
     this.cleanupSavePoints = PGProperty.CLEANUP_SAVEPOINTS.getBoolean(info);
+    this.limitTupleBytes = PGProperty.MAX_QUERY_MEMORY_BYTES.getLong(info);
     // assignment, argument
     this.replicationProtocol = new V3ReplicationProtocol(this, pgStream);
     readStartupMessages();
@@ -3064,8 +3065,7 @@ public class QueryExecutorImpl extends QueryExecutorBase {
   private long nextUniqueID = 1;
   private final boolean allowEncodingChanges;
   private final boolean cleanupSavePoints;
-
-  public static volatile long limitTupleBytes = Long.MAX_VALUE;
+  private final long limitTupleBytes;
 
   /**
    * <p>The estimated server response size since we last consumed the input stream from the server, in

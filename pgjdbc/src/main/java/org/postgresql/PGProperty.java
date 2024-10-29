@@ -375,7 +375,12 @@ public enum PGProperty {
       "When connections that are not explicitly closed are garbage collected, log the stacktrace from the opening of the connection to trace the leak source"),
 
   /**
-   * Specifies size of buffer during fetching result set. Can be specified as specified size or
+  * The allowed memory size in bytes, what a query can use (iData made attribute)
+  */
+  MAX_QUERY_MEMORY_BYTES("maxQueryMemoryBytes", Long.toString(Long.MAX_VALUE), "The allowed memory size in bytes, what a query can use"),
+
+  /**
+   * Specifies size of buffer during fetching result th. Can be specified as specified size or
    * percent of heap memory.
    */
   MAX_RESULT_BUFFER(
@@ -966,6 +971,22 @@ public enum PGProperty {
     } catch (NumberFormatException nfe) {
       throw new PSQLException(GT.tr("{0} parameter value must be an integer but was: {1}",
           getName(), value), PSQLState.INVALID_PARAMETER_VALUE, nfe);
+    }
+  }
+
+  /**
+  * Return the long value for this connection parameter in the given {@code Properties}
+  *
+  * @param properties properties to take actual value from
+  * @return evaluated value for this connection parameter converted to long
+  * @throws PSQLException if it cannot be converted to long.
+  */
+  public long getLong(Properties properties) throws PSQLException {
+    String value = get(properties);
+    try {
+      return Long.parseLong(value);
+    } catch (NumberFormatException nfe) {
+      throw new PSQLException(GT.tr("{0} parameter value must be a long but was: {1}", getName(), value), PSQLState.INVALID_PARAMETER_VALUE, nfe);
     }
   }
 

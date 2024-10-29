@@ -1686,6 +1686,14 @@ public abstract class BaseDataSource implements CommonDataSource, Referenceable 
     PGProperty.HIDE_UNPRIVILEGED_OBJECTS.set(properties, hideUnprivileged);
   }
 
+  public @Nullable String getMaxQueryMemoryBytes() {
+    return PGProperty.MAX_QUERY_MEMORY_BYTES.getOrDefault(properties);
+  }
+
+  public void setMaxQueryMemoryBytes(@Nullable String maxQueryMemoryBytes) {
+    PGProperty.MAX_QUERY_MEMORY_BYTES.set(properties, maxQueryMemoryBytes);
+  }
+
   public @Nullable String getMaxResultBuffer() {
     return PGProperty.MAX_RESULT_BUFFER.getOrDefault(properties);
   }
